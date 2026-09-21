@@ -1,0 +1,86 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2406                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+application     icoFoam;
+
+startFrom       startTime;
+
+startTime       0;
+
+stopAt          endTime;
+
+endTime         2;
+
+deltaT          0.005;
+
+writeControl    timeStep;
+
+writeInterval   20;
+
+purgeWrite      0;
+
+writeFormat     ascii;
+
+writePrecision  6;
+
+writeCompression off;
+
+timeFormat      general;
+
+timePrecision   6;
+
+runTimeModifiable true;
+
+functions
+{
+    statisticalConvergence1
+    {
+        type            statisticalConvergence;
+        libs            (cosamStatisticalConvergence);
+
+        writeControl    timeStep;
+        writeInterval   20;
+
+        sampleInterval  1;      // sample every time step
+        minSamples      100;    // no assessment below this many samples
+        tolMean         0.01;   // 95% interval on the mean, relative to |mean|
+        tolRms          0.05;   // 95% interval on the rms, relative to rms
+
+        signals
+        {
+            // volume-weighted average of |U| over the whole domain:
+            // a low-variance signal, as used for the stopping gate in the paper
+            volUmag
+            {
+                mode        volAverage;
+                field       U;
+                component   -1;         // -1 = magnitude
+            }
+
+            // single-cell probe just below the moving lid
+            probeUx
+            {
+                mode        point;
+                field       U;
+                component   0;
+                location    (0.05 0.09 0.005);
+            }
+        }
+    }
+}
+
+
+// ************************************************************************* //

@@ -1,0 +1,5 @@
+#!/bin/sh
+cd "${0%/*}" || exit 1
+
+./makeSignal.py --out arSignal.dat
+statConvCheck arSignal.dat 0.01 0.05 | tee log.statConvCheck
