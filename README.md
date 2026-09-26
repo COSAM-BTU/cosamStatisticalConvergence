@@ -18,8 +18,8 @@ intervals for the mean and for the root mean square at every write.
   and the **effective sample size** `Neff` that follows from it.
 - **Small-sample confidence intervals**: Student-*t* for the mean and the (asymmetric)
   chi-squared interval for the root mean square. At the `Neff = O(5)` typical of turbulent
-  records the normal quantile understates the interval on the mean by about fifty per cent,
-  so the correct quantiles matter.
+  records the Student-*t* interval on the mean is about half as wide again as the normal one
+  (the normal quantile understates it by about a third), so the correct quantiles matter.
 - **Welch periodogram** with a segment length that scales with the record.
 - **Signals from the field**: either a single-cell probe or a volume-weighted spatial average
   of a component or of the magnitude. The spatial average has a far smaller variance and is
@@ -144,31 +144,24 @@ tools/fftPeriod.py            offline amplitude spectrum of a probe record
 doc/interface.md              every dictionary entry and every reported quantity
 ```
 
-## Reproducing the article
+## Verification
 
 `tools/statConv.py` is the independent reference against which the compiled kernel is
 verified: it shares no source with the C++ and is compared on identical input. On the AR(1)
-record of `tutorials/arSignal` and on the U-duct probe record deposited with the article, the
+record of `tutorials/arSignal` and on the deposited U-duct probe record, the
 two agree to nine significant figures on the mean and the rms, to about one part in two
 thousand on the integral time scale and the effective sample size, and to two significant
 figures on the Welch frequency.
 
-The U-duct case dictionaries, the probe records and the data behind every figure and table in
-the article are deposited separately; see the data-availability statement of the article.
+The U-duct case dictionaries, the probe records and the data behind the examples are deposited
+separately on Zenodo (doi:10.5281/zenodo.22880129).
 
 ## Citation
 
-If you use this software, please cite both the article and the archive.
+If you use this software, please cite the Zenodo archive. A paper describing the software is in
+preparation; this section will be updated when it is published.
 
 ```bibtex
-@article{aydinbakar26statconv,
-    author  = {Ayd{\i}nbakar, Levent},
-    title   = {An {OpenFOAM} function object for in-situ assessment of the statistical
-               convergence of time-averaged turbulence statistics},
-    journal = {Computers \& Fluids},
-    year    = {2026},
-}
-
 @misc{aydinbakar26statconvcode,
     author       = {Ayd{\i}nbakar, Levent},
     title        = {{cosamStatisticalConvergence}: in-situ statistical-convergence
@@ -176,7 +169,7 @@ If you use this software, please cite both the article and the archive.
     year         = {2026},
     howpublished = {Zenodo},
     note         = {Concept identifier, resolving to the latest version},
-    doi          = {10.5281/zenodo.PENDING},
+    doi          = {10.5281/zenodo.22880057},
 }
 ```
 
