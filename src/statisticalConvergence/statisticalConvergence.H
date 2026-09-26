@@ -10,15 +10,16 @@
   Convergence decision (autoStop): plateau / range-insensitivity of the running
   time-mean. The two most-recent, consecutive, disjoint averaging windows of
   length compareWindow are compared; convergence is declared when their mean
-  difference falls below tolPlateau (relative to refScale, a fixed velocity
-  scale, so it is well defined even for near-zero-mean signals), sustained over
+  difference falls below tolPlateau (relative to max(|mean|, refScale), where
+  refScale is a fixed scale such as a bulk velocity, so it is well defined even
+  for near-zero-mean signals), sustained over
   stopConsecutive checks. This mirrors the averaging-range insensitivity
   criterion of Aydinbakar et al., Comput. Mech. (2021) -- "(20T,30T) vs
   (30T,40T) not significant". The 95% CIs are reported as honest uncertainty
   but are NOT the stop gate.
 
   Reference method: Oliver et al. Phys.Fluids 26:035101 (2014); White 1997 /
-  Wang & Glynn ACM TOMACS (2016). Validated against Python reference statConv.py.
+  Wang & Glynn ACM TOMACS (2016). Verified against the Python implementation tools/statConv.py.
 \*---------------------------------------------------------------------------*/
 #ifndef statisticalConvergence_H
 #define statisticalConvergence_H

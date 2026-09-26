@@ -1,8 +1,9 @@
 /*---------------------------------------------------------------------------*\
   statConvCheck -- standalone verification app for the statisticalConvergence
   math. Reads a 2-column text file (time value), runs the SHARED statConvMath::
-  analyse (identical to the functionObject), and prints the result. Compared
-  bit-for-bit against the Python reference scripts/statConv.py on the same file.
+  analyse (identical to the functionObject), and prints the result. Compared with
+  the Python implementation tools/statConv.py on the same file; the two agree to the
+  printed precision (about 3e-9 relative).
 
   usage: statConvCheck <file> [tolMean] [tolRms]
 \*---------------------------------------------------------------------------*/

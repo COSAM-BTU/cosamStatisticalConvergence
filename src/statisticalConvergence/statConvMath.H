@@ -2,7 +2,7 @@
   statConvMath.H -- shared, header-only statistical-convergence math used by BOTH
   the statisticalConvergence functionObject and the standalone statConvCheck
   verification app. Single source of truth -> C++ FO and the checker are identical,
-  and both are validated against the Python reference scripts/statConv.py.
+  and both are verified against the Python implementation tools/statConv.py.
 \*---------------------------------------------------------------------------*/
 #ifndef statConvMath_H
 #define statConvMath_H
@@ -233,7 +233,8 @@ inline Result analyse
     var /= (n - 1);
     const scalar rms = Foam::sqrt(var);
 
-    // integral time scale (Sokal: sum ACF to first non-positive lag)
+    // integral time scale: sum the ACF up to the lag before its first non-positive
+    // value (first-zero-crossing truncation, O'Neill et al. 2004; Mora & Obligado 2020)
     scalar T0 = 1.0;
     if (var > VSMALL)
     {

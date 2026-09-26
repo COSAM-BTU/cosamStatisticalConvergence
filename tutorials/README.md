@@ -14,8 +14,9 @@ of 5 and contaminated by a linear ramp over the first 2000 samples so that the
 transient-detection stage is exercised. `statConvCheck` then analyses it.
 
 Expected output: transient index `1460`, mean `5.0479`, rms `2.3075`, `T0 = 21.1`,
-`Neff = 1826`. The theoretical statistical inefficiency is `(1+phi)/(1-phi) = 19`; the small
-positive bias of the truncated-sum estimator is a known property of the direct estimator.
+`Neff = 1826`. The theoretical statistical inefficiency is `(1+phi)/(1-phi) = 19`; the estimate
+of 21.1 lies within the scatter of the estimator at this record length, `19.5 +- 1.7` over 400
+realizations (`tools/coverage.py --T0 19 --ratios 2028.4 --reps 400 --seed 2`).
 
 ## cavityProbe
 

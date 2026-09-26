@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
 """
-statisticalConvergence -- REFERENCE (Python) implementation of the decision method
-that the OpenFOAM C++ functionObject will implement. Given a scalar time signal it:
+statisticalConvergence -- Python implementation of the decision method that the
+OpenFOAM C++ function object implements. Given a scalar time signal it:
   1. detects the initial transient (MSER-m, White 1997 / MSER-5),
   2. computes the autocorrelation, integral time scale, effective sample size Neff,
   3. autocorrelation-corrected 95% CI for the MEAN and the RMS,
   4. dominant frequency via Welch PSD,
   5. reports stationary? / samplingAdequate? against user tolerances.
 
-This is the independent reference implementation against which the compiled C++
-kernel (src/statisticalConvergence/statConvMath.H) is verified: the two share no
-source and are compared on identical input. Method references: Oliver et al.,
-Phys. Fluids 26:035101 (2014); White, Simulation 69:323 (1997); Spratt (1998) and
-White, Cobb & Spratt (2000) for the batched MSER-5 form; Geyer, Statist. Sci.
-7:473 (1992) for the truncation rule; Welch, IEEE Trans. Audio Electroacoust.
-15:70 (1967) for the periodogram.
+This is the separate Python implementation against which the compiled C++ kernel
+(src/statisticalConvergence/statConvMath.H) is verified: the two share no source and are
+compared on identical input. Method references: Oliver et al., Phys. Fluids 26:035101 (2014);
+White, Simulation 69:323 (1997); Spratt (1998) and White, Cobb & Spratt (2000) for the batched
+MSER-5 form; O'Neill et al. (15th AFMC, 2004) and Mora & Obligado, Exp. Fluids 61:199 (2020)
+for the first-zero-crossing truncation of the autocorrelation sum; Welch, IEEE Trans. Audio
+Electroacoust. 15:70 (1967) for the periodogram.
 
 Usage:
   self-test:   python3 statConv.py --selftest
@@ -25,6 +25,7 @@ import numpy as np
 
 try:
     from scipy.signal import welch
+    from scipy.signal.windows import hann
     from scipy.stats import t as _tdist, chi2 as _chi2
     HAVE_SCIPY = True
 except Exception:
@@ -35,7 +36,7 @@ def mser(x, m=5):
     """MSER-m initial-transient truncation. Returns truncation index in ORIGINAL samples."""
     x = np.asarray(x, float)
     nb = len(x) // m
-    if nb < 4:
+    if nb < 8:                          # matches statConvMath.H
         return 0
     b = x[:nb * m].reshape(nb, m).mean(axis=1)
     n = len(b)
@@ -50,10 +51,11 @@ def mser(x, m=5):
 
 
 def acf(x, maxlag):
-    """Biased autocorrelation rho(0..maxlag)."""
+    """Autocorrelation rho(0..maxlag): lag-k sum divided by n times the unbiased
+    variance, the normalisation used by the compiled kernel."""
     x = np.asarray(x, float) - np.mean(x)
     n = len(x)
-    v = np.dot(x, x) / n
+    v = np.dot(x, x) / (n - 1)
     if v <= 0:
         return np.zeros(maxlag + 1)
     r = np.correlate(x, x, "full")[n - 1: n - 1 + maxlag + 1] / (v * n)
@@ -68,7 +70,7 @@ def integral_time_scale(x, dt):
     r = acf(x, maxlag)
     s = 0.0
     for k in range(1, len(r)):
-        if r[k] <= 0:                    # truncate at first non-positive lag (Sokal)
+        if r[k] <= 0:                    # first zero crossing: stop at the first non-positive lag
             break
         s += r[k]
     T0 = 1.0 + 2.0 * s
@@ -78,7 +80,8 @@ def integral_time_scale(x, dt):
 def analyze(t, x, tol_mean=0.01, tol_rms=0.05):
     t = np.asarray(t, float); x = np.asarray(x, float)
     n0 = len(x)
-    dt = np.median(np.diff(t)) if n0 > 1 else 1.0
+    # mean sampling interval over the whole record, as in the C++ kernel
+    dt = (t[-1] - t[0]) / (n0 - 1) if n0 > 1 else 1.0
 
     d = mser(x)                          # transient end (samples)
     xs = x[d:]; ts = t[d:]
@@ -109,9 +112,12 @@ def analyze(t, x, tol_mean=0.01, tol_rms=0.05):
     if HAVE_SCIPY and n >= 64:
         fs = 1.0 / dt
         L = min(max(256, n // 8), n // 2)   # matches statConvMath.H
-        f, P = welch(xs - mean, fs=fs, nperseg=L)
-        if len(f) > 1:
-            fdom = float(f[1 + int(np.argmax(P[1:]))])
+        # symmetric Hann window, 50 % overlap, per-segment mean removal; the kernel
+        # ignores the k = 0 and Nyquist (k = L/2) bins
+        f, P = welch(xs - mean, fs=fs, window=hann(L, sym=True), nperseg=L,
+                     noverlap=L - max(1, L // 2), detrend="constant")
+        if len(f) > 2:
+            fdom = float(f[1 + int(np.argmax(P[1:L // 2]))])
 
     stationary = (d < n0 - 20)
     sampling_ok = (rel_mean < tol_mean) and (rel_rms < tol_rms)

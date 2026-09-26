@@ -1,7 +1,8 @@
 /*---------------------------------------------------------------------------*\
   statisticalConvergence functionObject (COSAM) -- implementation.
-  Ports the validated Python reference (scripts/statConv.py) and adds an
-  autoStop plateau / range-insensitivity convergence gate (Aydinbakar 2021).
+  Uses the kernel of statConvMath.H, verified against the Python implementation
+  tools/statConv.py, and adds an autoStop plateau / range-insensitivity rule
+  (Aydinbakar et al. 2021).
 \*---------------------------------------------------------------------------*/
 #include "statisticalConvergence.H"
 #include "statConvMath.H"
@@ -66,6 +67,7 @@ bool Foam::functionObjects::statisticalConvergence::read(const dictionary& dict)
     consecCount_     = 0;
 
     signals_.clear();
+    times_.clear();         // histories restart together when the dictionary is re-read
     const dictionary& sigs = dict.subDict("signals");
     for (const entry& e : sigs)
     {
@@ -285,7 +287,7 @@ bool Foam::functionObjects::statisticalConvergence::write()
             Info<< "  statConv: PLATEAU CONVERGED -- all " << nSig
                 << " signal(s), " << consecCount_ << " consecutive checks"
                 << " (two consecutive " << compareWindow_ << "-window means agree"
-                << " < " << tolPlateau_*100 << "% of refScale)."
+                << " < " << tolPlateau_*100 << "% of max(|mean|, refScale))."
                 << " autoStop -> writing fields and ending run at t="
                 << mesh_.time().value() << endl;
 
